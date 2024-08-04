@@ -11,11 +11,10 @@ import {
   updateCursorPosition,
   initializeCursorBlinking,
   handleMouseClick,
+  getCursorState,
+  setCursorState,
 } from "../canvas/cursor";
 import { displayTextState } from "../utils/debug";
-
-let cursorLineIndex = 0;
-let cursorCharIndex = 0;
 
 /**
  * Initialize keyboard and mouse event listeners.
@@ -26,6 +25,10 @@ export function initializeKeyboardEvents(
 ) {
   document.addEventListener("keydown", (e) => {
     const lines = getTextLines();
+    const { lineIndex, charIndex } = getCursorState();
+
+    let cursorLineIndex = lineIndex;
+    let cursorCharIndex = charIndex;
 
     if (isPrintableKey(e)) {
       addTextAtPosition(cursorLineIndex, cursorCharIndex, e.key);
@@ -101,13 +104,14 @@ export function initializeKeyboardEvents(
       }
     }
 
-    renderText(ctx);
+    setCursorState(cursorLineIndex, cursorCharIndex);
     updateCursorPosition(cursorLineIndex, cursorCharIndex, ctx);
     displayTextState(); // Display the current text state in the console
   });
 
   canvas.addEventListener("click", (e) => handleMouseClick(e, ctx));
   initializeCursorBlinking(ctx);
+  renderText(ctx); // Initial render
 }
 
 /**
