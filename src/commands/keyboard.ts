@@ -45,25 +45,36 @@ export function initializeKeyboardEvents(
             removeLastCharacter(cursorLineIndex, cursorCharIndex - 1);
             cursorCharIndex--;
           } else if (cursorLineIndex > 0) {
+            const prevLineLength = lines[cursorLineIndex - 1].length;
             mergeLine(cursorLineIndex);
             cursorLineIndex--;
-            cursorCharIndex = lines[cursorLineIndex].length;
+            cursorCharIndex = prevLineLength;
           }
           break;
         case "ArrowLeft":
-          if (cursorCharIndex > 0) {
-            cursorCharIndex--;
-          } else if (cursorLineIndex > 0) {
-            cursorLineIndex--;
-            cursorCharIndex = lines[cursorLineIndex].length;
+          if (e.metaKey) {
+            // Command + Arrow Left
+            cursorCharIndex = 0;
+          } else {
+            if (cursorCharIndex > 0) {
+              cursorCharIndex--;
+            } else if (cursorLineIndex > 0) {
+              cursorLineIndex--;
+              cursorCharIndex = lines[cursorLineIndex].length;
+            }
           }
           break;
         case "ArrowRight":
-          if (cursorCharIndex < lines[cursorLineIndex].length) {
-            cursorCharIndex++;
-          } else if (cursorLineIndex < lines.length - 1) {
-            cursorLineIndex++;
-            cursorCharIndex = 0;
+          if (e.metaKey) {
+            // Command + Arrow Right
+            cursorCharIndex = lines[cursorLineIndex].length;
+          } else {
+            if (cursorCharIndex < lines[cursorLineIndex].length) {
+              cursorCharIndex++;
+            } else if (cursorLineIndex < lines.length - 1) {
+              cursorLineIndex++;
+              cursorCharIndex = 0;
+            }
           }
           break;
         case "ArrowUp":
