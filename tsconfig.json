@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es5", // Support pour ES5
+    "module": "commonjs", // Utiliser le système de modules CommonJS
+    "strict": true, // Activer toutes les vérifications strictes
+    "esModuleInterop": true, // Support pour les modules ES
+    "skipLibCheck": true, // Ignorer la vérification des types dans les fichiers de déclaration
+    "forceConsistentCasingInFileNames": true // Respecter la casse dans les noms de fichiers
+  },
+  "include": ["src/**/*"], // Inclure tous les fichiers dans le répertoire src
+  "exclude": ["node_modules", "tests"] // Exclure les répertoires node_modules et tests
+}
