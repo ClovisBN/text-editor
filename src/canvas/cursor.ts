@@ -58,8 +58,14 @@ export function handleMouseClick(
   const lines = getTextLines();
   const lineIndex = Math.min(Math.floor((y - 10) / 20), lines.length - 1); // Adjusted the y offset calculation
   const line = lines[lineIndex] || "";
-  let charIndex = 0;
+  let charIndex = line.length;
   let width = 10; // Starting x position
+
+  // Check if the click is beyond the last line of text
+  if (y > (lines.length - 1) * 20 + 20) {
+    updateCursorPosition(lines.length - 1, lines[lines.length - 1].length, ctx);
+    return;
+  }
 
   for (let i = 0; i < line.length; i++) {
     const charWidth = ctx.measureText(line[i]).width;
