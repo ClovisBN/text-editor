@@ -11,9 +11,15 @@ import {
   updateCursorPosition,
   initializeCursorBlinking,
   handleMouseClick,
+  handleMouseMove,
   getCursorState,
   setCursorState,
 } from "../canvas/cursor";
+import {
+  handleMouseDown,
+  handleMouseMove as handleSelectionMouseMove,
+  handleMouseUp,
+} from "../canvas/selection";
 import { displayTextState } from "../utils/debug";
 
 /**
@@ -121,6 +127,12 @@ export function initializeKeyboardEvents(
   });
 
   canvas.addEventListener("click", (e) => handleMouseClick(e, ctx));
+  canvas.addEventListener("mousedown", (e) => handleMouseDown(e, ctx));
+  canvas.addEventListener("mousemove", (e) => {
+    handleSelectionMouseMove(e, ctx);
+    handleMouseMove(e, ctx, canvas); // Handle hover for text cursor change
+  });
+  canvas.addEventListener("mouseup", (e) => handleMouseUp(e, ctx));
   initializeCursorBlinking(ctx);
   renderText(ctx); // Initial render
 }
