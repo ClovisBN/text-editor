@@ -22,8 +22,8 @@ export class Cursor {
   private renderer: Renderer;
   private selection: Selection;
   private isSelecting = false;
-  private blinkInterval: NodeJS.Timeout | null = null; // Correction du type
-  private isRedrawing = false; // Ajout du flag
+  private blinkInterval: NodeJS.Timeout | null = null;
+  private isRedrawing = false;
 
   constructor(ctx: CanvasRenderingContext2D, selection: Selection) {
     this.ctx = ctx;
@@ -45,30 +45,24 @@ export class Cursor {
   }
 
   public updateCursorPosition(lineIndex: number, charIndex: number) {
-    try {
-      this.cursorState.lineIndex = lineIndex;
-      this.cursorState.charIndex = charIndex;
+    this.cursorState.lineIndex = lineIndex;
+    this.cursorState.charIndex = charIndex;
 
-      const lines = getTextLines();
-      if (lineIndex < 0 || lineIndex >= lines.length) return;
-
-      const line = lines[lineIndex];
-      const textBeforeCursor = line.substring(0, charIndex);
-      this.cursorPosition.x = 10 + this.ctx.measureText(textBeforeCursor).width;
-      this.cursorPosition.y = 20 + lineIndex * 20;
-
-      this.clearAndRedraw();
-    } catch (error) {
-      console.error("Failed to update cursor position:", error);
-    }
+    const lines = getTextLines();
+    if (lineIndex < 0 || lineIndex >= lines.length) return;
+    const line = lines[lineIndex];
+    const textBeforeCursor = line.substring(0, charIndex);
+    this.cursorPosition.x = 10 + this.ctx.measureText(textBeforeCursor).width;
+    this.cursorPosition.y = 20 + lineIndex * 20;
+    this.clearAndRedraw();
   }
 
   private startBlinking() {
     if (this.blinkInterval) clearInterval(this.blinkInterval);
     this.blinkInterval = setInterval(() => {
       this.cursorVisible = !this.cursorVisible;
-      this.clearCursor(); // Efface uniquement le curseur
-      this.drawCursor(); // Redessine uniquement le curseur
+      this.clearCursor();
+      this.drawCursor();
     }, 500);
   }
 
@@ -80,20 +74,16 @@ export class Cursor {
       20
     );
     this.renderer.renderText();
+    this.selection.drawSelection(); // Redessinez la sélection ici
   }
 
   public clearAndRedraw() {
-    if (this.isRedrawing) return; // Prévenir les appels simultanés
+    if (this.isRedrawing) return;
     this.isRedrawing = true;
-
-    // Clear the entire canvas
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-
-    // Redraw text and selection
     this.renderer.renderText();
     this.selection.drawSelection();
     this.drawCursor();
-
     this.isRedrawing = false;
   }
 
