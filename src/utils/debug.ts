@@ -1,8 +1,5 @@
 import { getTextLines } from "../text/paragraph";
 
-/**
- * Display the current state of the text in the console.
- */
 export function displayTextState() {
   const lines = getTextLines();
   const textState = {

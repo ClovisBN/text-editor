@@ -8,6 +8,10 @@
   </head>
   <body>
     <canvas id="textEditorCanvas" width="800" height="600"></canvas>
+    <div id="controls">
+      <button onclick="executeCommand('bold', [currentIndex])">Bold</button>
+      <button onclick="executeCommand('italic', [currentIndex])">Italic</button>
+    </div>
     <script src="bundle.js"></script>
   </body>
 </html>

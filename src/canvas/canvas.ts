@@ -1,19 +1,24 @@
-import { renderText } from "./render";
-import { drawCursor, updateCursorPosition } from "./cursor";
+// src/canvas/canvas.ts
+
+import { Renderer } from "./render";
+import { Cursor } from "./cursor";
+import { Selection } from "./selection";
 
 export function initializeCanvas(
   canvas: HTMLCanvasElement,
-  ctx: CanvasRenderingContext2D
+  ctx: CanvasRenderingContext2D,
+  cursor: Cursor,
+  selection: Selection
 ) {
   ctx.font = "16px Arial";
-  renderText(ctx);
-  drawCursor(ctx, { x: 10, y: 20 });
+  const renderer = new Renderer(ctx);
+  renderer.renderText();
+  cursor.drawCursor();
 
-  // Handle canvas resizing
   window.addEventListener("resize", () => {
     canvas.width = window.innerWidth * 0.8;
     canvas.height = window.innerHeight * 0.8;
-    renderText(ctx);
-    drawCursor(ctx, { x: 10, y: 20 });
+    renderer.renderText();
+    cursor.drawCursor();
   });
 }

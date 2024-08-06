@@ -1,65 +1,51 @@
-import {
-  addNewLine,
-  mergeLine,
-  getTextLines,
-  addTextAtPosition,
-  removeLastCharacter,
-  splitLineAtPosition,
-} from "../text/paragraph";
-import { renderText } from "../canvas/render";
-import {
-  updateCursorPosition,
-  initializeCursorBlinking,
-  handleMouseClick,
-  handleMouseMove,
-  getCursorState,
-  setCursorState,
-} from "../canvas/cursor";
-import {
-  handleMouseDown,
-  handleMouseMove as handleSelectionMouseMove,
-  handleMouseUp,
-} from "../canvas/selection";
-import { displayTextState } from "../utils/debug";
+import { Paragraph } from "../text/paragraph";
+import { Cursor } from "../canvas/cursor";
+import { Renderer } from "../canvas/render";
 
-/**
- * Initialize keyboard and mouse event listeners.
- */
-export function initializeKeyboardEvents(
-  canvas: HTMLCanvasElement,
-  ctx: CanvasRenderingContext2D
-) {
-  document.addEventListener("keydown", (e) => {
-    const lines = getTextLines();
-    const { lineIndex, charIndex } = getCursorState();
+export class KeyboardHandler {
+  private cursor: Cursor;
+  private renderer: Renderer;
+
+  constructor(cursor: Cursor, renderer: Renderer) {
+    this.cursor = cursor;
+    this.renderer = renderer;
+    this.initializeKeyboardEvents();
+  }
+
+  private initializeKeyboardEvents() {
+    document.addEventListener("keydown", (e) => this.handleKeyDown(e));
+  }
+
+  private handleKeyDown(e: KeyboardEvent) {
+    const lines = Paragraph.getTextLines();
+    const { lineIndex, charIndex } = this.cursor.getCursorState();
 
     let cursorLineIndex = lineIndex;
     let cursorCharIndex = charIndex;
 
-    if (isPrintableKey(e)) {
-      addTextAtPosition(cursorLineIndex, cursorCharIndex, e.key);
+    if (this.isPrintableKey(e)) {
+      Paragraph.addTextAtPosition(cursorLineIndex, cursorCharIndex, e.key);
       cursorCharIndex++;
     } else {
       switch (e.key) {
         case "Enter":
-          splitLineAtPosition(cursorLineIndex, cursorCharIndex);
+          Paragraph.splitLineAtPosition(cursorLineIndex, cursorCharIndex);
           cursorLineIndex++;
           cursorCharIndex = 0;
           break;
         case "Backspace":
           if (cursorCharIndex > 0) {
-            removeLastCharacter(cursorLineIndex, cursorCharIndex - 1);
+            Paragraph.removeLastCharacter(cursorLineIndex, cursorCharIndex - 1);
             cursorCharIndex--;
           } else if (cursorLineIndex > 0) {
             const prevLineLength = lines[cursorLineIndex - 1].length;
-            mergeLine(cursorLineIndex);
+            Paragraph.mergeLine(cursorLineIndex);
             cursorLineIndex--;
             cursorCharIndex = prevLineLength;
           }
           break;
         case "ArrowLeft":
           if (e.metaKey) {
-            // Command + Arrow Left
             cursorCharIndex = 0;
           } else {
             if (cursorCharIndex > 0) {
@@ -72,7 +58,6 @@ export function initializeKeyboardEvents(
           break;
         case "ArrowRight":
           if (e.metaKey) {
-            // Command + Arrow Right
             cursorCharIndex = lines[cursorLineIndex].length;
           } else {
             if (cursorCharIndex < lines[cursorLineIndex].length) {
@@ -108,7 +93,7 @@ export function initializeKeyboardEvents(
           cursorCharIndex = lines[cursorLineIndex].length;
           break;
         case " ":
-          addTextAtPosition(cursorLineIndex, cursorCharIndex, " ");
+          Paragraph.addTextAtPosition(cursorLineIndex, cursorCharIndex, " ");
           cursorCharIndex++;
           break;
         case "Control":
@@ -117,30 +102,38 @@ export function initializeKeyboardEvents(
         case "Shift":
           return;
         default:
-          return; // Ignore other keys
+          return;
       }
     }
 
-    setCursorState(cursorLineIndex, cursorCharIndex);
-    updateCursorPosition(cursorLineIndex, cursorCharIndex, ctx);
-    displayTextState(); // Display the current text state in the console
-  });
+    this.cursor.setCursorState(cursorLineIndex, cursorCharIndex);
+    this.cursor.updateCursorPosition(cursorLineIndex, cursorCharIndex);
+    console.log(this.getTextState());
+  }
 
-  canvas.addEventListener("click", (e) => handleMouseClick(e, ctx));
-  canvas.addEventListener("mousedown", (e) => handleMouseDown(e, ctx));
-  canvas.addEventListener("mousemove", (e) => {
-    handleSelectionMouseMove(e, ctx);
-    handleMouseMove(e, ctx, canvas); // Handle hover for text cursor change
-  });
-  canvas.addEventListener("mouseup", (e) => handleMouseUp(e, ctx));
-  initializeCursorBlinking(ctx);
-  renderText(ctx); // Initial render
-}
+  private isPrintableKey(event: KeyboardEvent): boolean {
+    const key = event.key;
+    return key.length === 1 && !event.ctrlKey && !event.metaKey;
+  }
 
-/**
- * Determine if the key press event corresponds to a printable character.
- */
-function isPrintableKey(event: KeyboardEvent): boolean {
-  const key = event.key;
-  return key.length === 1 && !event.ctrlKey && !event.metaKey; // Allow single character keys and ignore control/meta keys
+  private getTextState() {
+    const lines = Paragraph.getTextLines();
+    return JSON.stringify(
+      {
+        paragraphs: lines.map((line) => ({
+          elements: [
+            {
+              textRun: {
+                content: line,
+                textStyle: {},
+              },
+            },
+          ],
+          paragraphStyle: {},
+        })),
+      },
+      null,
+      2
+    );
+  }
 }

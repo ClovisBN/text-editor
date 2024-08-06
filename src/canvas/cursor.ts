@@ -1,129 +1,131 @@
 import { getTextLines } from "../text/paragraph";
-import { renderText } from "./render";
+import { Renderer } from "./render";
+import { Selection } from "./selection";
 
-let cursorPosition = { x: 10, y: 20 };
-let cursorVisible = true;
-
-const cursorState = {
-  lineIndex: 0,
-  charIndex: 0,
-};
-
-export function drawCursor(
-  ctx: CanvasRenderingContext2D,
-  position: { x: number; y: number }
-) {
-  ctx.fillStyle = "black"; // Ensure the cursor is drawn in black
-  ctx.fillRect(position.x, position.y - 15, 2, 20); // Drawing cursor
+interface Position {
+  x: number;
+  y: number;
+  lineIndex: number;
+  charIndex: number;
 }
 
-export function updateCursorPosition(
-  lineIndex: number,
-  charIndex: number,
-  ctx: CanvasRenderingContext2D
-) {
-  cursorState.lineIndex = lineIndex;
-  cursorState.charIndex = charIndex;
+export class Cursor {
+  private ctx: CanvasRenderingContext2D;
+  private cursorState = { lineIndex: 0, charIndex: 0 };
+  private cursorPosition: Position = {
+    x: 10,
+    y: 20,
+    lineIndex: 0,
+    charIndex: 0,
+  };
+  private cursorVisible = true;
+  private renderer: Renderer;
+  private selection: Selection;
+  private isSelecting = false;
+  private blinkInterval: NodeJS.Timeout | null = null; // Correction du type
+  private isRedrawing = false; // Ajout du flag
 
-  const lines = getTextLines();
-  if (lineIndex < 0 || lineIndex >= lines.length) return; // Check bounds
-  const line = lines[lineIndex];
-  const textBeforeCursor = line.substring(0, charIndex);
-  cursorPosition.x = 10 + ctx.measureText(textBeforeCursor).width;
-  cursorPosition.y = 20 + lineIndex * 20; // Calculate y position based on line index
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clear canvas before drawing
-  renderText(ctx); // Re-render the text to avoid clearing it with the cursor
-  drawCursor(ctx, cursorPosition);
-}
+  constructor(ctx: CanvasRenderingContext2D, selection: Selection) {
+    this.ctx = ctx;
+    this.renderer = new Renderer(ctx);
+    this.selection = selection;
+    this.startBlinking();
+  }
 
-export function initializeCursorBlinking(ctx: CanvasRenderingContext2D) {
-  setInterval(() => {
-    cursorVisible = !cursorVisible;
-    if (cursorVisible) {
-      drawCursor(ctx, cursorPosition);
+  public drawCursor() {
+    if (this.cursorVisible && !this.isSelecting) {
+      this.ctx.fillStyle = "black";
+      this.ctx.fillRect(
+        this.cursorPosition.x,
+        this.cursorPosition.y - 15,
+        2,
+        20
+      );
+    }
+  }
+
+  public updateCursorPosition(lineIndex: number, charIndex: number) {
+    try {
+      this.cursorState.lineIndex = lineIndex;
+      this.cursorState.charIndex = charIndex;
+
+      const lines = getTextLines();
+      if (lineIndex < 0 || lineIndex >= lines.length) return;
+
+      const line = lines[lineIndex];
+      const textBeforeCursor = line.substring(0, charIndex);
+      this.cursorPosition.x = 10 + this.ctx.measureText(textBeforeCursor).width;
+      this.cursorPosition.y = 20 + lineIndex * 20;
+
+      this.clearAndRedraw();
+    } catch (error) {
+      console.error("Failed to update cursor position:", error);
+    }
+  }
+
+  private startBlinking() {
+    if (this.blinkInterval) clearInterval(this.blinkInterval);
+    this.blinkInterval = setInterval(() => {
+      this.cursorVisible = !this.cursorVisible;
+      this.clearCursor(); // Efface uniquement le curseur
+      this.drawCursor(); // Redessine uniquement le curseur
+    }, 500);
+  }
+
+  private clearCursor() {
+    this.ctx.clearRect(
+      this.cursorPosition.x,
+      this.cursorPosition.y - 15,
+      2,
+      20
+    );
+    this.renderer.renderText();
+  }
+
+  public clearAndRedraw() {
+    if (this.isRedrawing) return; // Prévenir les appels simultanés
+    this.isRedrawing = true;
+
+    // Clear the entire canvas
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+    // Redraw text and selection
+    this.renderer.renderText();
+    this.selection.drawSelection();
+    this.drawCursor();
+
+    this.isRedrawing = false;
+  }
+
+  public getCursorState() {
+    return this.cursorState;
+  }
+
+  public setCursorState(lineIndex: number, charIndex: number) {
+    this.cursorState.lineIndex = lineIndex;
+    this.cursorState.charIndex = charIndex;
+  }
+
+  public setSelecting(isSelecting: boolean) {
+    this.isSelecting = isSelecting;
+    this.cursorVisible = !isSelecting;
+    if (!isSelecting) {
+      const { lineIndex, charIndex } = this.selection.getSelectionEnd();
+      this.updateCursorPosition(lineIndex, charIndex);
+      this.startBlinking();
     } else {
-      ctx.fillStyle = "white"; // Set fill style to white before clearing the cursor
-      ctx.clearRect(cursorPosition.x, cursorPosition.y - 15, 2, 20); // Clear cursor
-    }
-  }, 500);
-}
-
-export function handleMouseClick(
-  event: MouseEvent,
-  ctx: CanvasRenderingContext2D
-) {
-  const rect = ctx.canvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-
-  const lines = getTextLines();
-  const lineHeight = 20; // Line height used for cursor positioning
-  const lineIndex = Math.min(
-    Math.floor((y - 5) / lineHeight),
-    lines.length - 1
-  ); // Adjusted y offset calculation
-  const line = lines[lineIndex] || "";
-  let charIndex = line.length;
-  let width = 10; // Starting x position
-
-  // Check if the click is beyond the last line of text
-  if (y > (lines.length - 1) * lineHeight + lineHeight) {
-    updateCursorPosition(lines.length - 1, lines[lines.length - 1].length, ctx);
-    return;
-  }
-
-  for (let i = 0; i < line.length; i++) {
-    const charWidth = ctx.measureText(line[i]).width;
-    if (x < width + charWidth) {
-      charIndex = i;
-      break;
-    }
-    width += charWidth;
-  }
-
-  updateCursorPosition(lineIndex, charIndex, ctx);
-}
-
-export function handleMouseMove(
-  event: MouseEvent,
-  ctx: CanvasRenderingContext2D,
-  canvas: HTMLCanvasElement
-) {
-  const rect = ctx.canvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-
-  const lines = getTextLines();
-  const lineHeight = 20; // Line height used for cursor positioning
-  const lineIndex = Math.floor((y - 5) / lineHeight); // Adjusted y offset calculation
-
-  let isHoveringText = false;
-  if (lineIndex >= 0 && lineIndex < lines.length) {
-    const line = lines[lineIndex] || "";
-    let width = 10;
-
-    for (let i = 0; i < line.length; i++) {
-      const charWidth = ctx.measureText(line[i]).width;
-      if (x < width + charWidth) {
-        isHoveringText = true;
-        break;
+      if (this.blinkInterval) {
+        clearInterval(this.blinkInterval);
+        this.blinkInterval = null;
       }
-      width += charWidth;
+      this.clearAndRedraw();
     }
   }
 
-  if (isHoveringText) {
-    canvas.style.cursor = "text";
-  } else {
-    canvas.style.cursor = "default";
+  public stopBlinking() {
+    if (this.blinkInterval) {
+      clearInterval(this.blinkInterval);
+      this.blinkInterval = null;
+    }
   }
-}
-
-export function getCursorState() {
-  return cursorState;
-}
-
-export function setCursorState(lineIndex: number, charIndex: number) {
-  cursorState.lineIndex = lineIndex;
-  cursorState.charIndex = charIndex;
 }
