@@ -179,7 +179,11 @@ export class Selection {
     if (this.isSelecting) {
       console.log("handleMouseUp called");
       this.isSelecting = false;
-      this.cursor.setSelecting(false);
+      if (this.isTextSelected()) {
+        this.cursor.setSelecting(true); // Le curseur reste invisible si le texte est sélectionné
+      } else {
+        this.cursor.setSelecting(false);
+      }
       this.cursor.updateCursorPosition(
         this.selectionEnd.lineIndex,
         this.selectionEnd.charIndex

@@ -36,7 +36,7 @@ export class KeyboardHandler {
     } else {
       switch (e.key) {
         case "Enter":
-          handleEnter(this.cursor);
+          handleEnter(this.cursor, this.selection); // Passez la sélection ici
           break;
         case "Backspace":
           handleBackspace(this.cursor, this.selection);
@@ -45,7 +45,7 @@ export class KeyboardHandler {
         case "ArrowRight":
         case "ArrowUp":
         case "ArrowDown":
-          handleArrowKeys(e, this.cursor);
+          handleArrowKeys(e, this.cursor, this.selection);
           break;
         case "Home":
           this.cursor.updateCursorPosition(

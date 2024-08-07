@@ -33,7 +33,11 @@ export class Cursor {
   }
 
   public drawCursor() {
-    if (this.cursorVisible && !this.isSelecting) {
+    if (
+      this.cursorVisible &&
+      !this.isSelecting &&
+      !this.selection.isTextSelected()
+    ) {
       this.ctx.fillStyle = "black";
       this.ctx.fillRect(
         this.cursorPosition.x,
@@ -98,7 +102,7 @@ export class Cursor {
 
   public setSelecting(isSelecting: boolean) {
     this.isSelecting = isSelecting;
-    this.cursorVisible = !isSelecting;
+    this.cursorVisible = !isSelecting && !this.selection.isTextSelected();
     if (!isSelecting) {
       const { lineIndex, charIndex } = this.selection.getSelectionEnd();
       this.updateCursorPosition(lineIndex, charIndex);
