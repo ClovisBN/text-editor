@@ -1,4 +1,4 @@
-import { getTextLines } from "../text/paragraph";
+import { getTextLines, Paragraph } from "../text/paragraph";
 import { Cursor } from "./cursor";
 
 export class Selection {
@@ -190,5 +190,36 @@ export class Selection {
 
   public getSelectionEnd() {
     return this.selectionEnd;
+  }
+
+  public getSelectionStart() {
+    return this.selectionStart;
+  }
+
+  public deleteSelectedText() {
+    const lines = Paragraph.getTextLines();
+    let { lineIndex: startLine, charIndex: startChar } = this.selectionStart;
+    let { lineIndex: endLine, charIndex: endChar } = this.selectionEnd;
+
+    // Ensure start is before end
+    if (startLine > endLine || (startLine === endLine && startChar > endChar)) {
+      [startLine, endLine] = [endLine, startLine];
+      [startChar, endChar] = [endChar, startChar];
+    }
+
+    if (startLine === endLine) {
+      lines[startLine] =
+        lines[startLine].substring(0, startChar) +
+        lines[endLine].substring(endChar);
+    } else {
+      const firstPart = lines[startLine].substring(0, startChar);
+      const lastPart = lines[endLine].substring(endChar);
+      lines[startLine] = firstPart + lastPart;
+      lines.splice(startLine + 1, endLine - startLine);
+    }
+
+    this.clearSelection();
+    this.cursor.updateCursorPosition(startLine, startChar);
+    this.cursor.clearAndRedraw();
   }
 }

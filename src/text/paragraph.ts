@@ -16,6 +16,10 @@ export class Paragraph {
     return this.lines;
   }
 
+  public static setTextLines(newLines: string[]) {
+    this.lines = newLines;
+  }
+
   public static addTextAtPosition(
     lineIndex: number,
     charIndex: number,
@@ -42,3 +46,5 @@ export class Paragraph {
 }
 
 export const getTextLines = () => Paragraph.getTextLines();
+export const setTextLines = (newLines: string[]) =>
+  Paragraph.setTextLines(newLines);

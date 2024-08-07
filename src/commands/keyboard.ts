@@ -1,14 +1,17 @@
 import { Paragraph } from "../text/paragraph";
 import { Cursor } from "../canvas/cursor";
 import { Renderer } from "../canvas/render";
+import { Selection } from "../canvas/selection";
 
 export class KeyboardHandler {
   private cursor: Cursor;
   private renderer: Renderer;
+  private selection: Selection;
 
-  constructor(cursor: Cursor, renderer: Renderer) {
+  constructor(cursor: Cursor, renderer: Renderer, selection: Selection) {
     this.cursor = cursor;
     this.renderer = renderer;
+    this.selection = selection;
     this.initializeKeyboardEvents();
   }
 
@@ -22,6 +25,18 @@ export class KeyboardHandler {
 
     let cursorLineIndex = lineIndex;
     let cursorCharIndex = charIndex;
+
+    if (
+      this.selection.getSelectionStart().lineIndex !==
+        this.selection.getSelectionEnd().lineIndex ||
+      this.selection.getSelectionStart().charIndex !==
+        this.selection.getSelectionEnd().charIndex
+    ) {
+      if (e.key === "Backspace" || e.key === "Delete") {
+        this.selection.deleteSelectedText();
+        return;
+      }
+    }
 
     if (this.isPrintableKey(e)) {
       Paragraph.addTextAtPosition(cursorLineIndex, cursorCharIndex, e.key);
