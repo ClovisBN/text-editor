@@ -1,7 +1,11 @@
-import { Paragraph } from "../text/paragraph";
 import { Cursor } from "../canvas/cursor";
 import { Renderer } from "../canvas/render";
 import { Selection } from "../canvas/selection";
+import { handlePrintableKey } from "./keyMethods/handlePrintableKey";
+import { handleBackspace } from "./keyMethods/handleBackspace";
+import { handleEnter } from "./keyMethods/handleEnter";
+import { handleArrowKeys } from "./keyMethods/handleArrowKeys";
+import { Paragraph } from "../text/paragraph";
 
 export class KeyboardHandler {
   private cursor: Cursor;
@@ -20,18 +24,7 @@ export class KeyboardHandler {
   }
 
   private handleKeyDown(e: KeyboardEvent) {
-    const lines = Paragraph.getTextLines();
-    const { lineIndex, charIndex } = this.cursor.getCursorState();
-
-    let cursorLineIndex = lineIndex;
-    let cursorCharIndex = charIndex;
-
-    if (
-      this.selection.getSelectionStart().lineIndex !==
-        this.selection.getSelectionEnd().lineIndex ||
-      this.selection.getSelectionStart().charIndex !==
-        this.selection.getSelectionEnd().charIndex
-    ) {
+    if (this.selection.isTextSelected()) {
       if (e.key === "Backspace" || e.key === "Delete") {
         this.selection.deleteSelectedText();
         return;
@@ -39,77 +32,36 @@ export class KeyboardHandler {
     }
 
     if (this.isPrintableKey(e)) {
-      Paragraph.addTextAtPosition(cursorLineIndex, cursorCharIndex, e.key);
-      cursorCharIndex++;
+      handlePrintableKey(e, this.cursor);
     } else {
       switch (e.key) {
         case "Enter":
-          Paragraph.splitLineAtPosition(cursorLineIndex, cursorCharIndex);
-          cursorLineIndex++;
-          cursorCharIndex = 0;
+          handleEnter(this.cursor);
           break;
         case "Backspace":
-          if (cursorCharIndex > 0) {
-            Paragraph.removeLastCharacter(cursorLineIndex, cursorCharIndex - 1);
-            cursorCharIndex--;
-          } else if (cursorLineIndex > 0) {
-            const prevLineLength = lines[cursorLineIndex - 1].length;
-            Paragraph.mergeLine(cursorLineIndex);
-            cursorLineIndex--;
-            cursorCharIndex = prevLineLength;
-          }
+          handleBackspace(this.cursor, this.selection);
           break;
         case "ArrowLeft":
-          if (e.metaKey) {
-            cursorCharIndex = 0;
-          } else {
-            if (cursorCharIndex > 0) {
-              cursorCharIndex--;
-            } else if (cursorLineIndex > 0) {
-              cursorLineIndex--;
-              cursorCharIndex = lines[cursorLineIndex].length;
-            }
-          }
-          break;
         case "ArrowRight":
-          if (e.metaKey) {
-            cursorCharIndex = lines[cursorLineIndex].length;
-          } else {
-            if (cursorCharIndex < lines[cursorLineIndex].length) {
-              cursorCharIndex++;
-            } else if (cursorLineIndex < lines.length - 1) {
-              cursorLineIndex++;
-              cursorCharIndex = 0;
-            }
-          }
-          break;
         case "ArrowUp":
-          if (cursorLineIndex > 0) {
-            cursorLineIndex--;
-            cursorCharIndex = Math.min(
-              cursorCharIndex,
-              lines[cursorLineIndex].length
-            );
-          }
-          break;
         case "ArrowDown":
-          if (cursorLineIndex < lines.length - 1) {
-            cursorLineIndex++;
-            cursorCharIndex = Math.min(
-              cursorCharIndex,
-              lines[cursorLineIndex].length
-            );
-          }
+          handleArrowKeys(e, this.cursor);
           break;
         case "Home":
-          cursorCharIndex = 0;
+          this.cursor.updateCursorPosition(
+            this.cursor.getCursorState().lineIndex,
+            0
+          );
           break;
         case "End":
-          cursorCharIndex = lines[cursorLineIndex].length;
+          this.cursor.updateCursorPosition(
+            this.cursor.getCursorState().lineIndex,
+            Paragraph.getTextLines()[this.cursor.getCursorState().lineIndex]
+              .length
+          );
           break;
         case " ":
-          Paragraph.addTextAtPosition(cursorLineIndex, cursorCharIndex, " ");
-          cursorCharIndex++;
+          handlePrintableKey(e, this.cursor);
           break;
         case "Control":
         case "Alt":
@@ -121,8 +73,7 @@ export class KeyboardHandler {
       }
     }
 
-    this.cursor.setCursorState(cursorLineIndex, cursorCharIndex);
-    this.cursor.updateCursorPosition(cursorLineIndex, cursorCharIndex);
+    this.cursor.clearAndRedraw();
     console.log(this.getTextState());
   }
 

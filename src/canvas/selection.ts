@@ -222,4 +222,11 @@ export class Selection {
     this.cursor.updateCursorPosition(startLine, startChar);
     this.cursor.clearAndRedraw();
   }
+
+  public isTextSelected(): boolean {
+    return (
+      this.selectionStart.lineIndex !== this.selectionEnd.lineIndex ||
+      this.selectionStart.charIndex !== this.selectionEnd.charIndex
+    );
+  }
 }
