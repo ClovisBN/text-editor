@@ -5,6 +5,7 @@ import { handlePrintableKey } from "./keyMethods/handlePrintableKey";
 import { handleBackspace } from "./keyMethods/handleBackspace";
 import { handleEnter } from "./keyMethods/handleEnter";
 import { handleArrowKeys } from "./keyMethods/handleArrowKeys";
+import { handleSpace } from "./keyMethods/handleSpace";
 import { Paragraph } from "../text/paragraph";
 
 export class KeyboardHandler {
@@ -25,18 +26,22 @@ export class KeyboardHandler {
 
   private handleKeyDown(e: KeyboardEvent) {
     if (this.selection.isTextSelected()) {
-      if (e.key === "Backspace" || e.key === "Delete") {
-        this.selection.deleteSelectedText();
+      if (e.key === "Backspace" || e.key === "Delete" || e.key === " ") {
+        if (e.key === "Backspace" || e.key === "Delete") {
+          this.selection.deleteSelectedText();
+        } else if (e.key === " ") {
+          handleSpace(this.cursor, this.selection);
+        }
         return;
       }
     }
 
     if (this.isPrintableKey(e)) {
-      handlePrintableKey(e, this.cursor);
+      handlePrintableKey(e, this.cursor, this.selection);
     } else {
       switch (e.key) {
         case "Enter":
-          handleEnter(this.cursor, this.selection); // Passez la sélection ici
+          handleEnter(this.cursor, this.selection);
           break;
         case "Backspace":
           handleBackspace(this.cursor, this.selection);
@@ -46,6 +51,9 @@ export class KeyboardHandler {
         case "ArrowUp":
         case "ArrowDown":
           handleArrowKeys(e, this.cursor, this.selection);
+          break;
+        case " ":
+          handleSpace(this.cursor, this.selection);
           break;
         case "Home":
           this.cursor.updateCursorPosition(
@@ -59,9 +67,6 @@ export class KeyboardHandler {
             Paragraph.getTextLines()[this.cursor.getCursorState().lineIndex]
               .length
           );
-          break;
-        case " ":
-          handlePrintableKey(e, this.cursor);
           break;
         case "Control":
         case "Alt":
