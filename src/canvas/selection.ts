@@ -119,6 +119,10 @@ export class Selection {
 
   public handleMouseDown(event: MouseEvent) {
     console.log("handleMouseDown called");
+    if (this.isTextSelected()) {
+      this.clearSelection();
+    }
+
     const rect = this.ctx.canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
@@ -198,6 +202,19 @@ export class Selection {
 
   public getSelectionStart() {
     return this.selectionStart;
+  }
+
+  public setSelection(
+    startLine: number,
+    startChar: number,
+    endLine: number,
+    endChar: number
+  ) {
+    this.selectionStart = { lineIndex: startLine, charIndex: startChar };
+    this.selectionEnd = { lineIndex: endLine, charIndex: endChar };
+    this.isSelecting = false;
+    this.cursor.setSelecting(false);
+    this.cursor.clearAndRedraw();
   }
 
   public deleteSelectedText() {

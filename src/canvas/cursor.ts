@@ -32,6 +32,14 @@ export class Cursor {
     this.startBlinking();
   }
 
+  public getCanvas(): HTMLCanvasElement {
+    return this.ctx.canvas;
+  }
+
+  public getCtx(): CanvasRenderingContext2D {
+    return this.ctx;
+  }
+
   public drawCursor() {
     if (
       this.cursorVisible &&
