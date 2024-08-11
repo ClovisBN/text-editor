@@ -1,10 +1,66 @@
-body {
+/* styles.css */
+
+body,
+html {
   margin: 0;
-  font-family: Arial, sans-serif;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-canvas {
-  border: 1px solid #ccc;
+#main-container {
+  width: 100%;
+}
+
+#ruler-container {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  margin-bottom: 10px;
+  background-color: #f0f0f0;
+}
+
+#ruler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ddd;
+}
+
+.ruler-cursor {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 20px;
+  background-color: #333;
+  cursor: ew-resize;
+}
+
+#left-cursor {
+  left: 0;
+}
+
+#right-cursor {
+  right: 0;
+}
+
+.margin-bar {
+  position: absolute;
+  top: 20px;
+  bottom: 0;
+  width: 2px;
+  background-color: #333;
+  border-left: 1px dashed #666;
+  border-right: 1px dashed #666;
+  z-index: 100;
+}
+
+#canvas {
   display: block;
-  margin: 20px auto;
+  margin: 0 auto;
+  border: 1px solid #ccc;
 }

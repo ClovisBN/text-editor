@@ -1,7 +1,9 @@
-import { getTextLines } from "../text/paragraph";
+import { Paragraph } from "../text/paragraph";
 import { Renderer } from "./render";
 import { Selection } from "./selection";
+import { RulerHandler } from "../commands/rulerHandler";
 
+// Interface pour la position du curseur
 interface Position {
   x: number;
   y: number;
@@ -24,11 +26,17 @@ export class Cursor {
   private isSelecting = false;
   private blinkInterval: NodeJS.Timeout | null = null;
   private isRedrawing = false;
+  private rulerHandler: RulerHandler; // Ajout de la référence à RulerHandler
 
-  constructor(ctx: CanvasRenderingContext2D, selection: Selection) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    selection: Selection,
+    rulerHandler: RulerHandler
+  ) {
     this.ctx = ctx;
-    this.renderer = new Renderer(ctx);
+    this.renderer = new Renderer(ctx, rulerHandler);
     this.selection = selection;
+    this.rulerHandler = rulerHandler; // Stocker la référence à RulerHandler
     this.startBlinking();
   }
 
@@ -60,11 +68,14 @@ export class Cursor {
     this.cursorState.lineIndex = lineIndex;
     this.cursorState.charIndex = charIndex;
 
-    const lines = getTextLines();
+    const lines = Paragraph.getTextLines();
     if (lineIndex < 0 || lineIndex >= lines.length) return;
     const line = lines[lineIndex];
     const textBeforeCursor = line.substring(0, charIndex);
-    this.cursorPosition.x = 10 + this.ctx.measureText(textBeforeCursor).width;
+
+    const leftMargin = this.rulerHandler.leftMargin; // Obtenez la marge gauche dynamique
+    this.cursorPosition.x =
+      leftMargin + this.ctx.measureText(textBeforeCursor).width; // Utilisez la marge gauche ici
     this.cursorPosition.y = 20 + lineIndex * 20;
     this.clearAndRedraw();
   }

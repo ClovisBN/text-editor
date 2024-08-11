@@ -2,6 +2,7 @@ import { Cursor } from "./canvas/cursor";
 import { KeyboardHandler } from "./commands/keyboard";
 import { Renderer } from "./canvas/render";
 import { Selection } from "./canvas/selection";
+import { RulerHandler } from "./commands/rulerHandler";
 import {
   handleDoubleClick,
   handleTripleClick,
@@ -12,10 +13,21 @@ window.onload = () => {
   const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
   const selection = new Selection(ctx);
-  const cursor = new Cursor(ctx, selection);
+  const rulerHandler = new RulerHandler((leftMargin, rightMargin) => {
+    // Ici, vous pouvez manipuler ce que vous voulez faire avec les marges
+    console.log("Marges changées:", leftMargin, rightMargin);
+
+    // Mettre à jour la position du curseur en fonction de la nouvelle marge gauche
+    const { lineIndex, charIndex } = cursor.getCursorState();
+    cursor.updateCursorPosition(lineIndex, charIndex);
+    renderer.renderText();
+  });
+
+  const renderer = new Renderer(ctx, rulerHandler);
+  const cursor = new Cursor(ctx, selection, rulerHandler);
+
   selection.setCursor(cursor);
 
-  const renderer = new Renderer(ctx);
   new KeyboardHandler(cursor, renderer, selection);
 
   canvas.addEventListener("mousedown", (e) => selection.handleMouseDown(e));
